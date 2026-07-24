@@ -1,0 +1,222 @@
+<!-- 
+		发布地址：https://www.ximi.me/post-6040.html
+		版本：v1.02 
+		更新时间：2036-06-07
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Ximi AI Navigator - Ultimate</title>
+    <script src="crypto-js.min.js"></script>
+    <script src="link-date.js"></script>
+
+      <style>
+        /* 核心变量定义：清爽现代的色带 */
+        :root { 
+            --bg: #f4f6f8; 
+            --surface: #ffffff; 
+            --border: #e2e8f0; 
+            --text-main: #1e293b; 
+            --text-sub: #64748b; 
+            --accent: #2563eb; 
+            --sidebar-w: 189px; 
+            --collapsed-w: 85px; 
+            --header-h: 64px; 
+        }
+        
+        body { margin: 0; background: var(--bg); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+        /* ================= 顶部导航栏 ================= */
+        header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 100; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+        
+        .header-left { display: flex; align-items: center; width: 240px; }
+        .menu-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; margin-right: 12px; color: var(--text-sub); transition: 0.2s; }
+        .menu-btn:hover { background: #f1f5f9; color: var(--text-main); }
+        .logo { font-weight: 700; font-size: 18px; letter-spacing: 0.5px; }
+
+        /* 将搜索框移至顶部居中，完美协调样式 */
+        .header-center { flex: 1; display: flex; justify-content: center; }
+        .search-wrapper { display: flex; align-items: center; width: 100%; max-width: 500px; background: #f1f5f9; border-radius: 20px; padding: 4px 16px; border: 1px solid transparent; transition: 0.2s; }
+        .search-wrapper:focus-within { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .search-wrapper svg { color: var(--text-sub); width: 18px; height: 18px; }
+        .search-box { flex: 1; border: none; background: transparent; padding: 8px 12px; outline: none; font-size: 14px; color: var(--text-main); }
+
+        .header-right { width: 240px; } /* 占位平衡 */
+
+        /* ================= 侧边栏 ================= */
+        nav { position: fixed; top: var(--header-h); left: 0; width: var(--sidebar-w); height: calc(100vh - var(--header-h)); background: var(--surface); border-right: 1px solid var(--border); transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); overflow-y: auto; padding: 16px 12px; box-sizing: border-box; }
+        
+        .cat-item { display: flex; align-items: center; padding: 12px 16px; cursor: pointer; border-radius: 8px; margin-bottom: 4px; transition: 0.2s; color: var(--text-sub); }
+        .cat-item:hover { background: #e6e8eb; color: var(--text-main); }
+        .cat-item.active { background: #eff6ff; color: var(--accent); }
+        
+        /* 侧边栏文字：默认显示，不加粗 */
+        .cat-text { font-size: 14px; font-weight: 400; white-space: nowrap; }
+        
+        /* 侧边栏图标：默认完全隐藏 */
+        .cat-icon { display: none; width: 24px; height: 24px; border-radius: 6px; object-fit: cover; } 
+
+        /* 侧边栏缩放状态 (.collapsed) */
+        nav.collapsed { width: var(--collapsed-w); padding: 16px 8px; }
+        nav.collapsed .cat-item { justify-content: center; padding: 14px 0; }
+        nav.collapsed .cat-text { display: none; } /* 隐藏文字 */
+        nav.collapsed .cat-icon { display: block; margin: 0; } /* 显示图标并居中 */
+
+        /* ================= 主内容区 ================= */
+        main { margin-top: var(--header-h); margin-left: var(--sidebar-w); padding: 32px; transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        nav.collapsed ~ main { margin-left: var(--collapsed-w); }
+
+        /* 卡片网格：最小宽度300px */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        /*
+        .card { background: var(--surface); padding: 20px; border-radius: 16px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .card:hover { transform: translateY(-2px); border-color: var(--border); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .card img { width: 50px; height: 50px; border-radius: 12px; flex-shrink: 0; border: 1px solid #f1f5f9; object-fit: cover; }
+        
+        .card-content { flex: 1; min-width: 0; }
+        .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .card-top h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .tag { font-size: 11px; background: #f1f5f9; color: var(--text-sub); padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+        .card-desc { font-size: 13px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+*/
+/* ================= 卡片交互优化 ================= */
+.card { 
+    background: var(--surface); 
+    padding: 20px; 
+    border-radius: 15px; 
+    border: 1px solid rgba(0,0,0,0.05); 
+    display: flex; 
+    align-items: center; 
+    gap: 20px; 
+    cursor: pointer; 
+    /* 增加 overflow: hidden 确保图片放大时不会溢出卡片圆角 */
+    overflow: hidden; 
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); 
+}
+
+.card:hover { 
+    transform: translateY(-6px); 
+    border-color: var(--accent); 
+    box-shadow: 0 16px 32px -8px rgba(37, 99, 235, 0.15); 
+}
+
+/* 1. 图片悬浮轻微放大 */
+.card img { 
+    width: 56px; 
+    height: 56px; 
+    border-radius: 14px; 
+    flex-shrink: 0; 
+    object-fit: cover;
+    transition: transform 0.5s ease; /* 图片变化的平滑度 */
+}
+
+.card:hover img { 
+    transform: scale(1.1); /* 鼠标移入时放大 10% */
+}
+
+/* 2. 分类标签 hover 交互：背景与文字变色 */
+
+
+/* 鼠标移入卡片时，标签变色 */
+.card:hover .tag { 
+    background: var(--accent); /* 背景变为蓝色 */
+    color: #ffffff;           /* 文字变为白色 */
+}
+
+/* 标题样式微调 */
+.card-top h3 { 
+    margin: 0; 
+    font-size: 16px; 
+    font-weight: 700; 
+    color: #0f172a; 
+    transition: color 0.3s ease;
+}
+
+.card:hover .card-top h3 {
+    color: var(--accent); /* 标题 hover 时也微变色，增加互动感 */
+}
+/* 容器核心：确保 flex 内容不溢出 */
+.card-content { 
+    flex: 1; 
+    min-width: 0; /* 关键：防止 flex 容器被内部超长文本撑大 */
+    display: flex;
+    flex-direction: column;
+}
+
+/* 顶部区域：强制一行，空间自动分配 */
+.card-top { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* 标题靠左，标签靠右 */
+    gap: 12px; 
+    margin-bottom: 6px;
+    white-space: nowrap; /* 确保不换行 */
+}
+
+.card-top h3 { 
+    margin: 0; 
+    font-size: 15px; 
+    font-weight: 700; 
+    color: var(--text-main);
+    overflow: hidden;
+    text-overflow: ellipsis; /* 标题过长时自动截断 */
+}
+
+/* 标签：禁止换行，缩小字体 */
+.tag { 
+    flex-shrink: 0; /* 标签绝不缩小 */
+    font-size: 10px; 
+    font-weight: 600;
+    background: #f1f5f9; 
+    color: #8b94a0; 
+    padding: 3px 10px; 
+    border-radius: 4px; 
+}
+
+/* 描述：单行显示并自动省略 */
+.card-desc { 
+    font-size: 13px; 
+    color: var(--text-sub); 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+                footer { text-align: center; padding: 20px; color: #606060; font-size: 12px; border-top: 1px solid var(--border); }
+    </style>
+    
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <div class="menu-btn" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+        </div>
+        <div class="logo">Ximi Navigator</div>
+    </div>
+    
+    <div class="header-center">
+        <div class="search-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" class="search-box" placeholder="搜索应用名称或描述 (实时筛选)...">
+        </div>
+    </div>
+    <div class="header-right"></div>
+</header>
+
+<nav id="sidebar">
+    <div id="cat-list"></div>
+</nav>
+
+<main>
+    <div id="results" class="grid"></div>
+</main>
+
+<footer>©️ 2026 All Rights Reserved. Powered by <a href="http://www.ximi.me/" target="_blank" title="希米导航" style="color: #1e293c;">Ximi</a></footer>
+
+<script>let globalLinks=[];let globalCategories=[];window.addEventListener('DOMContentLoaded',()=>{if(typeof settingData==='undefined'||typeof getNavData!=='function'){document.getElementById('results').innerHTML="<h3 style='color:red;'>错误：link-date.js 未正确加载或格式错误</h3>";return}const settings=settingData.user[0];let navData=null;if(settings.encryption==='md5'){if(typeof CryptoJS==='undefined'){alert("加密库未加载，请检查网络！");return}const inputPwd=prompt("请输入访问密码：");if(!inputPwd){document.getElementById('results').innerHTML="<h3>未输入密码，禁止访问。请刷新页面重试。</h3>";return}navData=getNavData(inputPwd)}else{navData=getNavData()}if(!navData){alert("密码错误或数据损坏！");document.getElementById('results').innerHTML="<h3 style='color:red;'>密码错误或数据解密失败，禁止访问。</h3>";return}globalLinks=navData.links||[];globalCategories=navData.categories||[];renderCats(globalCategories);renderCards(globalLinks,'All','');document.getElementById('searchInput').addEventListener('input',(e)=>{const activeCatEl=document.querySelector('.cat-item.active .cat-text');const activeCat=activeCatEl?(activeCatEl.innerText==='全部应用'?'All':activeCatEl.innerText):'All';renderCards(globalLinks,activeCat,e.target.value)})});function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed')}function renderCats(categories){const catList=document.getElementById('cat-list');let html=`<div class="cat-item active"onclick="filterByCat(event, 'All')"><img class="cat-icon"src="https://www.ximi.me/img_src/ai.png"><span class="cat-text">全部应用</span></div>`;html+=categories.map(c=>`<div class="cat-item"onclick="filterByCat(event, '${c.name}')"><img class="cat-icon"src="${c.icon}"onerror="this.src='https://via.placeholder.com/20'"><span class="cat-text">${c.name}</span></div>`).join('');catList.innerHTML=html}function renderCards(allLinks,filter='All',search=''){const resultsDiv=document.getElementById('results');const searchLower=search.toLowerCase();const filtered=allLinks.filter(l=>{const matchCat=(filter==='All'||l.categories===filter);const matchSearch=(l.name.toLowerCase().includes(searchLower)||l.description.toLowerCase().includes(searchLower));return matchCat&&matchSearch});if(filtered.length===0){resultsDiv.innerHTML=`<p style="color:#64748b; padding: 20px;">未找到匹配的应用...</p>`;return}resultsDiv.innerHTML=filtered.map(l=>`<div class="card"onclick="window.open('${l.url}', '_blank')"title="${l.description}"><img src="${l.icon}"onerror="this.src='https://via.placeholder.com/50'"><div class="card-content"><div class="card-top"><h3>${l.name}</h3><span class="tag">${l.categories}</span></div><div class="card-desc">${l.description}</div></div></div>`).join('')}function filterByCat(event,cat){document.querySelectorAll('.cat-item').forEach(el=>el.classList.remove('active'));event.currentTarget.classList.add('active');renderCards(globalLinks,cat,document.getElementById('searchInput').value)}</script>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Ximi 管理后台</title>
+    <style>
+        :root { --bg: #f4f6f8; --sidebar-w: 260px; --accent: #2563eb; --border: #e2e8f0; }
+        body { margin: 0; display: flex; font-family: -apple-system, sans-serif; background: var(--bg); color: #334155; }
+        
+        /* === 左侧栏菜单 === */
+        #sidebar { width: var(--sidebar-w); background: #fff; height: 100vh; border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border); color: #0f172a; }
+        
+        .menu-group { border-bottom: 1px solid #f1f5f9; }
+        .group-title { padding: 15px 20px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #fafafa; transition: 0.2s; }
+        .group-title:hover { background: #f1f5f9; }
+        
+        .menu-sub { padding: 5px 0 10px 0; }
+        .menu-item { padding: 10px 20px 10px 40px; cursor: pointer; font-size: 14px; margin: 2px 10px; border-radius: 6px; position: relative; }
+        .menu-item:before { content: "•"; position: absolute; left: 25px; color: #cbd5e1; }
+        .menu-item:hover { background: #f1f5f9; }
+        .menu-item.active { background: #dbeafe; color: var(--accent); font-weight: 600; }
+        .menu-item.active:before { color: var(--accent); }
+        .menu-new { color: #059669; font-weight: 600; }
+        .menu-new:before { content: "+"; font-weight: bold; color: #059669; }
+
+        /* === 右侧主区域 === */
+        #main { flex: 1; padding: 40px; overflow-y: auto; height: 100vh; box-sizing: border-box; }
+        .view-title { font-size: 22px; margin-top: 0; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px; color: #1e293b; }
+        
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: #fff; padding: 20px; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card label { display: block; font-size: 12px; color: #64748b; margin-bottom: 5px; font-weight: 600; }
+        
+        input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; width: 100%; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        input:focus, select:focus { border-color: var(--accent); }
+        
+        .btn-del { background: #fee2e2; color: #ef4444; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; width: 100%; }
+        .btn-del:hover { background: #fecaca; }
+        .btn-save { position: fixed; bottom: 30px; right: 30px; background: #059669; color: #fff; padding: 15px 30px; border-radius: 50px; cursor: pointer; border: none; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(5,150,105,0.3); transition: 0.3s; z-index: 100; }
+        .btn-save:hover { background: #047857; transform: translateY(-2px); }
+        
+        li {
+    padding: 10px;
+}
+    </style>
+    <script src="md5.js"></script>
+        <script src="crypto-js.min.js"></script>
+
+</head>
+<body>
+
+<div id="sidebar">
+    <div class="sidebar-header">后台管理中心</div>
+    <div id="sidebar-content"></div>
+</div>
+
+<div id="main">
+    <h1 class="view-title" id="view-title">👈 请在左侧选择要管理的功能</h1>
+    
+    <div id="user" class="card" style="    margin-bottom: 25px;    border-bottom: 2px solid var(--border);">
+        <h3>系统设置</h3>
+        <div>版本信息: <input type="text" id="sys-version" readonly></div>
+        <div>加密方式: 
+            <select id="sys-encryption">
+                <option value="none">none</option>
+                <option value="base64">base64</option>
+                <option value="md5">md5</option>
+            </select>
+        </div>
+        <div>密码设置: <input type="password" id="sys-pwd" placeholder="至少6位，包含任意2种字符类型"></div>
+        <div id="pwd-hint" style="font-size:12px; color:gray;"></div>
+    </div>
+
+    <div id="view-content">
+        <ol>
+            <li>本程序是一个基于HTML和JavaScript的简单链接管理工具，适合个人当网址收藏夹！</li>
+            <li>使用方法非常简单，只需编辑当前目录下的 <code>link-data.js</code> 文件，按照示例格式添加或修改链接数据即可。</li>
+            <li>后台数据存储在 <code>link-data.js</code> 文件中，可直接运行 <code>admin.html</code> 文件进行可视化编辑，也可以使用文本编辑器直接修改 <code>link-data.js</code> 文件。</li>
+            <li>数据格式为一个数组，每个元素是一个对象，包含 <code>name</code>（链接名称）、<code>url</code>（链接地址）、<code>icon</code>（链接图标URL）、<code>cat</code>（链接分类）等属性。</li>
+            <li>链接分类 <code>cat</code> 可以自定义，同一分类的链接会在主页面显示在一起，方便管理和访问。</li>
+            <li>主页 <code>index.html</code> 会根据 <code>link-data.js</code> 文件中的数据动态生成链接列表，点击链接即可访问对应的网址。</li>
+            <li>修改数据保存前请记得备份当前目录下的 <code>link-data.js</code> 文件，以免数据丢失。</li>
+            <li>保存时请选择替换当前目录下的 <code>link-data.js</code> 文件。</li>
+            <li>新建链接填写信息时建议最后选择分类信息，因为分类内容是动态显示的。选择分类后，新建的链接会自动跳转到对应分类下，点击对应分类即可显示，并不是消失了。</li>
+            <li>如需放置在公共网络环境中，建议选择合适的加密方式避免隐私泄露。</li>
+            <li>作者：希米</li>
+            <li>原文：https://www.ximi.me/post-6040.html</li>
+            <li>最后更新：2026-06-07</li>
+        </ol>
+    </div>
+</div>
+
+<button class="btn-save" onclick="saveToFile()">📥 保存所有更改 (link-date.js)</button>
+
+<script src="link-date.js"></script>
+
+<script>
+    // ==========================================
+    // 1. 全局状态与数据定义
+    // ==========================================
+    let categories = [];
+    let links = [];
+    let menuState = { cat: true, link: true }; // 菜单折叠状态
+    let current = { type: '', id: '' }; // 当前视图
+
+    // ==========================================
+    // 2. 页面初始化与解密加载
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (typeof settingData === 'undefined' || typeof getNavData !== 'function') {
+            alert("配置数据未加载，请检查 link-date.js 是否存在");
+            return;
+        }
+
+        const settings = settingData.user[0];
+        
+        // 填充系统设置区域
+        document.getElementById('sys-version').value = settings.version;
+        document.getElementById('sys-encryption').value = settings.encryption;
+        
+        let navData = null;
+
+        // 执行密码拦截与解密
+        if (settings.encryption === 'md5') {
+            const inputPwd = prompt("请输入管理密码：");
+            if (!inputPwd) {
+                alert("未输入密码，无法加载数据。");
+                document.getElementById('main').innerHTML = "<h2 style='color:red;'>已锁定。请刷新页面重新输入密码。</h2>";
+                return;
+            }
+            navData = getNavData(inputPwd);
+
+            // 【核心修复】如果解密成功，将输入的明文密码自动填入右侧密码设置框
+            if (navData) {
+                document.getElementById('sys-pwd').value = inputPwd;
+            }
+
+        } else {
+            navData = getNavData();
+            // 如果是非 md5 模式且配置中有保存密码，也一并显示出来
+            if (navData && settings.pwd) {
+                document.getElementById('sys-pwd').value = settings.pwd;
+            }
+        }
+
+        // 数据加载成功，渲染后台
+        if (navData) {
+            categories = navData.categories || [];
+            links = navData.links || [];
+            
+            // 为没有 ID 的历史链接生成唯一 ID，供编辑使用
+            links.forEach(l => { if(!l.id) l.id = Date.now() + Math.random(); });
+            
+            renderSidebar();
+            renderContent();
+        } else {
+            alert("密码错误或数据解密失败，无法进入后台。");
+            document.getElementById('main').innerHTML = "<h2 style='color:red;'>解密失败，请刷新页面重试。</h2>";
+        }
+    });
+
+    // ==========================================
+    // 3. UI 交互与路由渲染 (保留你原有全部逻辑)
+    // ==========================================
+    function toggleMenu(menu) {
+        menuState[menu] = !menuState[menu];
+        renderSidebar();
+    }
+
+    function view(type, id) {
+        if (type === 'cat_new') {
+            let newName = '新分类_' + Math.floor(Math.random() * 1000);
+            categories.push({ name: newName, icon: '' });
+            current = { type: 'cat_edit', id: newName };
+        } else if (type === 'link_new') {
+            if(categories.length === 0) return alert("请先新建一个分类！");
+            let defaultCat = categories[0].name;
+            links.unshift({ id: Date.now() + Math.random(), name: '', url: '', categories: defaultCat, description: '', icon: '' });
+            current = { type: 'link_cat', id: defaultCat };
+        } else {
+            current = { type, id };
+        }
+        renderSidebar();
+        renderContent();
+    }
+
+    function renderSidebar() {
+        const sidebar = document.getElementById('sidebar-content');
+        
+        let catHtml = `<div class="menu-item menu-new" onclick="view('cat_new')">新建分类</div>`;
+        categories.forEach(c => {
+            let active = (current.type === 'cat_edit' && current.id === c.name) ? 'active' : '';
+            catHtml += `<div class="menu-item ${active}" onclick="view('cat_edit', '${c.name}')">${c.name}</div>`;
+        });
+
+        let linkHtml = `<div class="menu-item menu-new" onclick="view('link_new')">新建链接</div>`;
+        categories.forEach(c => {
+            let active = (current.type === 'link_cat' && current.id === c.name) ? 'active' : '';
+            linkHtml += `<div class="menu-item ${active}" onclick="view('link_cat', '${c.name}')">${c.name}</div>`;
+        });
+
+        sidebar.innerHTML = `
+            <div class="menu-group">
+                <div class="group-title" onclick="toggleMenu('cat')">
+                    <span>分类管理</span> <span>${menuState.cat ? '▼' : '▶'}</span>
+                </div>
+                <div class="menu-sub" style="display: ${menuState.cat ? 'block' : 'none'}">${catHtml}</div>
+            </div>
+            <div class="menu-group">
+                <div class="group-title" onclick="toggleMenu('link')">
+                    <span>链接管理</span> <span>${menuState.link ? '▼' : '▶'}</span>
+                </div>
+                <div class="menu-sub" style="display: ${menuState.link ? 'block' : 'none'}">${linkHtml}</div>
+            </div>
+        `;
+    }
+
+    function renderContent() {
+        const content = document.getElementById('view-content');
+        const title = document.getElementById('view-title');
+
+        if (current.type === 'cat_edit') {
+            const c = categories.find(x => x.name === current.id);
+            if (!c) return;
+            title.innerText = "正在编辑分类： " + c.name;
+            content.innerHTML = `
+                <div class="card" style="max-width: 500px;">
+                    <label>分类名称（修改将自动同步所属链接）</label>
+                    <input value="${c.name}" onchange="updateCatName('${c.name}', this.value)" placeholder="输入分类名称">
+                    <label>分类图标 URL</label>
+                    <input value="${c.icon}" oninput="updateCatIcon('${c.name}', this.value)" placeholder="输入图标图片链接">
+                    <br><br>
+                    <button class="btn-del" onclick="deleteCat('${c.name}')">🗑️ 删除该分类 (包含内部所有链接)</button>
+                </div>
+            `;
+        } else if (current.type === 'link_cat') {
+            title.innerText = "分类下的链接列表： " + current.id;
+            const filtered = links.filter(l => l.categories === current.id);
+            
+            if (filtered.length === 0) {
+                content.innerHTML = `<p style="color:#94a3b8;">该分类下暂无链接，请点击左侧 "+ 新建链接" 添加。</p>`;
+                return;
+            }
+
+            content.innerHTML = `<div class="card-grid">` + filtered.map(l => `
+                <div class="card">
+                    <label>应用名称</label>
+                    <input value="${l.name}" oninput="updateLink('${l.id}', 'name', this.value)" placeholder="例如: 百度">
+                    <label>链接地址 URL</label>
+                    <input value="${l.url}" oninput="updateLink('${l.id}', 'url', this.value)" placeholder="https://...">
+                    <label>图标 URL</label>
+                    <input value="${l.icon}" oninput="updateLink('${l.id}', 'icon', this.value)" placeholder="图标图片地址">
+                    <label>所属分类</label>
+                    <select onchange="updateLink('${l.id}', 'categories', this.value)">
+                        ${categories.map(cat => `<option value="${cat.name}" ${l.categories === cat.name ? 'selected' : ''}>${cat.name}</option>`).join('')}
+                    </select>
+                    <label>一句话描述</label>
+                    <input value="${l.description}" oninput="updateLink('${l.id}', 'description', this.value)" placeholder="例如: 最好用的搜索引擎">
+                    <button class="btn-del" onclick="deleteLink('${l.id}')">🗑️ 删除此链接</button>
+                </div>`).join('') + `</div>`;
+        }
+    }
+
+    // ==========================================
+    // 4. 数据更新与删除逻辑
+    // ==========================================
+    function updateLink(id, key, value) {
+        const link = links.find(l => l.id == id);
+        if (link) {
+            link[key] = value;
+            if(key === 'categories') renderContent(); 
+        }
+    }
+
+    function updateCatName(oldName, newName) {
+        if (!newName || newName.trim() === '') return alert("分类名不能为空！");
+        const cat = categories.find(c => c.name === oldName);
+        if (cat) {
+            cat.name = newName;
+            links.forEach(l => { if (l.categories === oldName) l.categories = newName; });
+            current.id = newName;
+            renderSidebar();
+            renderContent();
+        }
+    }
+
+    function updateCatIcon(name, newIcon) {
+        const cat = categories.find(c => c.name === name);
+        if (cat) cat.icon = newIcon;
+    }
+
+    function deleteCat(name) {
+        if (confirm(`⚠️ 危险操作：确定要删除分类【${name}】吗？\n该分类下的所有链接也会被一并清空！`)) {
+            categories = categories.filter(c => c.name !== name);
+            links = links.filter(l => l.categories !== name);
+            current = { type: '', id: '' };
+            renderSidebar();
+            document.getElementById('view-title').innerText = "👈 请在左侧选择要管理的功能";
+            document.getElementById('view-content').innerHTML = "";
+        }
+    }
+
+    function deleteLink(id) {
+        if (confirm("确定要删除这条链接吗？")) {
+            links = links.filter(l => l.id != id);
+            renderContent();
+        }
+    }
+
+    // ==========================================
+    // 5. 数据保存与安全加密逻辑
+    // ==========================================
+    function validatePwd(pwd) {
+        if (pwd.length < 6) return false;
+        let types = 0;
+        if (/[A-Z]/.test(pwd)) types++;
+        if (/[a-z]/.test(pwd)) types++;
+        if (/[0-9]/.test(pwd)) types++;
+        if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) types++;
+        return types >= 2;
+    }
+
+async function saveToFile() {
+    const encSelect = document.getElementById('sys-encryption').value;
+    const newPwd = document.getElementById('sys-pwd').value;
+    const currentSetting = settingData.user[0];
+
+    // 1. 基础校验：如果加密方式是 MD5，必须输入密码
+    if (encSelect === 'md5' && (!newPwd || !validatePwd(newPwd))) {
+        return alert("MD5 模式下，密码必须填写且强度满足要求（6位以上，含2种字符类型）！");
+    }
+
+    // 整理去除无用数据
+    const exportCats = categories.filter(c => c.name.trim() !== "").map(c => ({ name: c.name, icon: c.icon }));
+    const exportLinks = links.map(l => { const { id, ...rest } = l; return rest; });
+    const jsonString = JSON.stringify({ categories: exportCats, links: exportLinks });
+
+    let finalData = "";
+    // 【修改点】始终计算密码的 MD5 哈希值
+    const finalPwdHash = newPwd ? SparkMD5.hash(newPwd) : currentSetting.pwd;
+
+    try {
+        if (encSelect === 'md5') {
+            const base64Data = btoa(unescape(encodeURIComponent(jsonString)));
+            finalData = CryptoJS.AES.encrypt(base64Data, newPwd).toString();
+        } else if (encSelect === 'base64') {
+            finalData = btoa(unescape(encodeURIComponent(jsonString)));
+        } else {
+            finalData = jsonString;
+        }
+
+        // 更新头部配置
+        const newSetting = {
+            user: [{
+                version: currentSetting.version,
+                encryption: encSelect,
+                pwd: finalPwdHash, // 始终保存 MD5 哈希
+                pwdHint: currentSetting.pwdHint
+            }]
+        };
+
+// 拼装 link-date.js 输出字符串
+const content = `const settingData = ${JSON.stringify(newSetting, null, 4)};\n` +
+                `const navDataContent = \`${finalData}\`;\n\n` +
+                `function getNavData(inputPwd) {\n` +
+                `    const enc = settingData.user[0].encryption;\n\n` +
+                `    // 基础防御：MD5模式必须有密码\n` +
+                `    if (enc === 'md5' && (!inputPwd)) return null;\n\n` +
+                `    try {\n` +
+                `        if (enc === 'md5') {\n` +
+                `            const decrypted = CryptoJS.AES.decrypt(navDataContent, inputPwd);\n` +
+                `            const decryptedString = decrypted.toString(CryptoJS.enc.Utf8);\n` +
+                `            if (!decryptedString) return null;\n` +
+                `            return JSON.parse(decodeURIComponent(escape(atob(decryptedString))));\n` +
+                `        } \n` +
+                `        else if (enc === 'base64') {\n` +
+                `            // 使用 UTF-8 兼容方式解码 Base64\n` +
+                `            const str = decodeURIComponent(atob(navDataContent).split('').map(function(c) {\n` +
+                `                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);\n` +
+                `            }).join(''));\n` +
+                `            return JSON.parse(str);\n` +
+                `        } \n` +
+                `        else {\n` +
+                `            // None 模式：直接解析\n` +
+                `            return typeof navDataContent === 'string' ? JSON.parse(navDataContent) : navDataContent;\n` +
+                `        }\n` +
+                `    } catch(e) {\n` +
+                `        console.error("数据解析失败:", e);\n` +
+                `        return null;\n` +
+                `    }\n` +
+                `}`;
+
+        const blob = new Blob([content], { type: 'text/javascript' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'link-date.js';
+        a.click();
+        alert("保存成功！已更新密码哈希值。");
+    } catch (e) {
+        alert("保存失败: " + e.message);
+    }
+}
+
+</script>
+
+</body>
+</html>
